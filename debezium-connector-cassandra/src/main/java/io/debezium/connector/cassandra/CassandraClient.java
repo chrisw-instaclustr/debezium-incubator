@@ -17,6 +17,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.codahale.metrics.MetricRegistry;
 import com.datastax.driver.core.Cluster;
 import com.datastax.driver.core.Host;
@@ -39,6 +42,7 @@ import io.netty.handler.ssl.SslContext;
  * A wrapper around Cassandra driver that is used to query Cassandra table and table schema.
  */
 public class CassandraClient implements AutoCloseable {
+    private static final Logger LOGGER = LoggerFactory.getLogger(CassandraClient.class);
     private static final LoadBalancingPolicy DEFAULT_POLICY = new TokenAwarePolicy(DCAwareRoundRobinPolicy.builder().build());
 
     private final Cluster cluster;
@@ -75,11 +79,13 @@ public class CassandraClient implements AutoCloseable {
     }
 
     public List<TableMetadata> getCdcEnabledTableMetadataList() {
-        return cluster.getMetadata().getKeyspaces().stream()
+        final List<TableMetadata> cdcTableMetdata = cluster.getMetadata().getKeyspaces().stream()
                 .map(KeyspaceMetadata::getTables)
                 .flatMap(Collection::stream)
                 .filter(tm -> tm.getOptions().isCDC())
                 .collect(Collectors.toList());
+        LOGGER.debug("INSTA: CDC table metadata is {}", cdcTableMetdata);
+        return cdcTableMetdata;
     }
 
     public TableMetadata getCdcEnabledTableMetadata(String keyspace, String table) {

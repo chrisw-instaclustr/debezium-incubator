@@ -91,6 +91,7 @@ public class QueueProcessor extends AbstractProcessor {
         if (event == null) {
             return;
         }
+        LOGGER.debug("INSTA: processing event: {}", event);
         switch (event.getEventType()) {
             case CHANGE_EVENT:
                 ChangeRecord changeRecord = (ChangeRecord) event;

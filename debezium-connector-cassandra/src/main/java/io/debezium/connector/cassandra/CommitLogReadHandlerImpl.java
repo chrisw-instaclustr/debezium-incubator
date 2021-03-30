@@ -217,13 +217,16 @@ public class CommitLogReadHandlerImpl implements CommitLogReadHandler {
 
     @Override
     public void handleMutation(Mutation mutation, int size, int entryLocation, CommitLogDescriptor descriptor) {
+        LOGGER.debug("INSTA: handling mutation {}", mutation);
         if (!mutation.trackedByCDC()) {
+            LOGGER.debug("INSTA: Mutation determined to not be tracked by CDC.");
             return;
         }
 
         metrics.setCommitLogPosition(entryLocation);
 
         for (PartitionUpdate pu : mutation.getPartitionUpdates()) {
+            LOGGER.debug("INSTA: handling partition update: {}", pu);
             OffsetPosition offsetPosition = new OffsetPosition(descriptor.fileName(), entryLocation);
             KeyspaceTable keyspaceTable = new KeyspaceTable(mutation.getKeyspaceName(), pu.metadata().cfName);
 
@@ -313,6 +316,7 @@ public class CommitLogReadHandlerImpl implements CommitLogReadHandler {
      *      (4) Assemble a {@link Record} object from the populated data and queue the record
      */
     private void handlePartitionDeletion(PartitionUpdate pu, OffsetPosition offsetPosition, KeyspaceTable keyspaceTable) {
+        LOGGER.debug("INSTA: handling partition-level delete for keyspace/table: {}", keyspaceTable);
         try {
 
             SchemaHolder.KeyValueSchema keyValueSchema = schemaHolder.getOrUpdateKeyValueSchema(keyspaceTable);
@@ -366,6 +370,7 @@ public class CommitLogReadHandlerImpl implements CommitLogReadHandler {
      *      (4) Assemble a {@link Record} object from the populated data and queue the record
      */
     private void handleRowModifications(Row row, RowType rowType, PartitionUpdate pu, OffsetPosition offsetPosition, KeyspaceTable keyspaceTable) {
+        LOGGER.debug("INSTA: Handling row modification for keyspace/table: {}", keyspaceTable);
 
         SchemaHolder.KeyValueSchema schema = schemaHolder.getOrUpdateKeyValueSchema(keyspaceTable);
         Schema keySchema = schema.keySchema();
@@ -380,16 +385,19 @@ public class CommitLogReadHandlerImpl implements CommitLogReadHandler {
 
         switch (rowType) {
             case INSERT:
+                LOGGER.debug("INSTA: handling insert");
                 recordMaker.insert(DatabaseDescriptor.getClusterName(), offsetPosition, keyspaceTable, false,
                         Conversions.toInstantFromMicros(ts), after, keySchema, valueSchema, MARK_OFFSET, queue::enqueue);
                 break;
 
             case UPDATE:
+                LOGGER.debug("INSTA: handling update");
                 recordMaker.update(DatabaseDescriptor.getClusterName(), offsetPosition, keyspaceTable, false,
                         Conversions.toInstantFromMicros(ts), after, keySchema, valueSchema, MARK_OFFSET, queue::enqueue);
                 break;
 
             case DELETE:
+                LOGGER.debug("INSTA: handling delete");
                 recordMaker.delete(DatabaseDescriptor.getClusterName(), offsetPosition, keyspaceTable, false,
                         Conversions.toInstantFromMicros(ts), after, keySchema, valueSchema, MARK_OFFSET, queue::enqueue);
                 break;

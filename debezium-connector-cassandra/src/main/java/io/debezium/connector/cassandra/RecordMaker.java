@@ -32,6 +32,7 @@ public class RecordMaker {
     public void insert(String cluster, OffsetPosition offsetPosition, KeyspaceTable keyspaceTable, boolean snapshot,
                        Instant tsMicro, RowData data, Schema keySchema, Schema valueSchema,
                        boolean markOffset, BlockingConsumer<Record> consumer) {
+        LOGGER.debug("INSTA: Creating insert record object");
         createRecord(cluster, offsetPosition, keyspaceTable, snapshot, tsMicro,
                 data, keySchema, valueSchema, markOffset, consumer, Record.Operation.INSERT);
     }
@@ -39,6 +40,7 @@ public class RecordMaker {
     public void update(String cluster, OffsetPosition offsetPosition, KeyspaceTable keyspaceTable, boolean snapshot,
                        Instant tsMicro, RowData data, Schema keySchema, Schema valueSchema,
                        boolean markOffset, BlockingConsumer<Record> consumer) {
+        LOGGER.debug("INSTA: Creating update record object");
         createRecord(cluster, offsetPosition, keyspaceTable, snapshot, tsMicro,
                 data, keySchema, valueSchema, markOffset, consumer, Record.Operation.UPDATE);
     }
@@ -46,6 +48,7 @@ public class RecordMaker {
     public void delete(String cluster, OffsetPosition offsetPosition, KeyspaceTable keyspaceTable, boolean snapshot,
                        Instant tsMicro, RowData data, Schema keySchema, Schema valueSchema,
                        boolean markOffset, BlockingConsumer<Record> consumer) {
+        LOGGER.debug("INSTA: Creating delete record object");
         createRecord(cluster, offsetPosition, keyspaceTable, snapshot, tsMicro,
                 data, keySchema, valueSchema, markOffset, consumer, Record.Operation.DELETE);
     }
