@@ -57,6 +57,7 @@ public class SchemaHolder {
 
     public KeyValueSchema getOrUpdateKeyValueSchema(KeyspaceTable kt) {
         if (!tableToKVSchemaMap.containsKey(kt)) {
+            LOGGER.debug("INSTA: Refreshing schemas because we don't know about table {}", kt);
             refreshSchema(kt);
         }
         return tableToKVSchemaMap.getOrDefault(kt, null);
@@ -101,6 +102,7 @@ public class SchemaHolder {
     private Map<KeyspaceTable, TableMetadata> getLatestTableMetadatas() {
         Map<KeyspaceTable, TableMetadata> latest = new HashMap<>();
         for (TableMetadata tm : cassandraClient.getCdcEnabledTableMetadataList()) {
+            LOGGER.debug("INSTA: latest table metadata for table is: {}", tm.exportAsString());
             latest.put(new KeyspaceTable(tm), tm);
         }
         return latest;
@@ -109,6 +111,7 @@ public class SchemaHolder {
     private void removeDeletedTableSchemas(Map<KeyspaceTable, TableMetadata> latestTableMetadataMap) {
         Set<KeyspaceTable> existingTables = tableToKVSchemaMap.keySet();
         Set<KeyspaceTable> latestTables = latestTableMetadataMap.keySet();
+        LOGGER.debug("INSTA: Potentially deleting schemas.  Existing: {}.  Latest: {}", existingTables, latestTables);
         existingTables.removeAll(latestTables);
         tableToKVSchemaMap.keySet().removeAll(existingTables);
     }
@@ -120,6 +123,8 @@ public class SchemaHolder {
                 KeyValueSchema keyValueSchema = new KeyValueSchema(kafkaTopicPrefix, metadata, sourceInfoStructMaker);
                 tableToKVSchemaMap.put(table, keyValueSchema);
                 LOGGER.debug("Updated schema for {}", table);
+            } else {
+                LOGGER.debug("INSTA: existing table metadata has been determined to match new metadata for table: {}.  Existing metadata is: {}.  New metadata Is: {}.", table, existingTableMetadata.exportAsString(), metadata.exportAsString());
             }
         });
     }
